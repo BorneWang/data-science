@@ -36,6 +36,12 @@ ANN.fit(X_train,mnist.train.labels)
 f1_score(mnist.test.labels,ANN.predict(X_test),average='macro')
 f1_score(mnist.train.labels,ANN.predict(X_train),average='macro')  
 
+ ANN = MLPClassifier(hidden_layer_sizes=(529,), solver='sgd', 
+                     activation='tanh')
+ANN.fit(X_train,mnist.train.labels)
+f1_score(mnist.test.labels,ANN.predict(X_test),average='macro')
+f1_score(mnist.train.labels,ANN.predict(X_train),average='macro') 
+
 ANN_f1score = np.zeros(20)
 for i in range(519,539):
      ANN = MLPClassifier(hidden_layer_sizes=(i,), solver='adam', 
