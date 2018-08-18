@@ -256,14 +256,65 @@
 		L164.2,85.6 L160.9,85.6 L159.0,85.6 L158.1,85.6 L157.0,85.6 L155.6,84.0 L155.0,84.0 L152.9,82.8
 		L150.9,82.8 L149.3,82.8 L148.1,82.8 L146.8,82.8 L144.7,82.8  '/></g>
 	</g>
-	<g id="gnuplot_plot_6" ><title>low accuracy</title>
-<g fill="none" color="gray" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
+	<g id="gnuplot_plot_6" ><title>resnet-34-2</title>
+<g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<g transform="translate(507.9,130.0)" stroke="none" fill="black" font-family="Arial" font-size="12.00"  text-anchor="end">
+		<text><tspan font-family="Times"  font-size="10.0">resnet-34-2</tspan><tspan font-size="12.0" dy="0.00"></tspan></text>
+	</g>
+</g>
+<g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
+	<path stroke='rgb(255,   0,   0)'  d='M516.2,126.1 L558.4,126.1 M331.1,105.8 L328.1,105.8 L325.2,107.0 L314.1,107.0 L311.4,108.3 L308.9,107.0
+		L301.5,105.8 L296.9,104.2 L294.6,104.2 L290.3,103.0 L288.1,101.8 L282.0,103.0 L276.3,101.8 L270.9,100.2
+		L265.7,100.2 L260.8,100.2 L251.8,97.7 L247.7,97.7 L245.0,96.1 L241.1,94.9 L238.7,94.9 L232.8,92.1
+		L229.5,90.9 L224.3,89.7 L223.3,89.7 L217.6,88.0 L209.0,88.0 L205.1,86.8 L202.9,85.6 L198.0,84.0
+		L195.3,86.8 L194.1,86.8 L192.2,86.8 L189.3,86.8 L187.0,85.6 L185.9,85.6 L185.4,84.0 L184.3,84.0
+		L181.7,84.0 L181.2,84.0 L180.3,84.0 L178.8,85.6 L176.1,85.6 L174.3,85.6 L172.6,84.0 L171.8,84.0
+		L171.0,85.6 L169.8,85.6 L169.5,85.6 L168.3,85.6 L165.4,85.6 L164.7,85.6 L163.3,85.6 L162.7,85.6
+		L161.7,86.8 L159.5,86.8 L157.7,85.6 L156.0,85.6 L154.9,85.6 L153.3,85.6 L152.3,84.0 L151.6,84.0
+		L150.1,84.0 L148.5,84.0 L146.9,84.0 L145.5,84.0 L144.8,82.8 L142.1,82.8 L140.7,82.8  '/></g>
+	</g>
+	<g id="gnuplot_plot_7" ><title>resnet-50-2</title>
+<g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
+	<g transform="translate(507.9,148.0)" stroke="none" fill="black" font-family="Arial" font-size="12.00"  text-anchor="end">
+		<text><tspan font-family="Times"  font-size="10.0">resnet-50-2</tspan><tspan font-size="12.0" dy="0.00"></tspan></text>
+	</g>
+</g>
+<g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
+	<path stroke='rgb(  0,   0,   0)'  d='M516.2,144.1 L558.4,144.1 M239.6,93.7 L238.4,92.1 L236.0,92.1 L234.8,90.9 L233.7,92.1 L231.4,90.9
+		L230.3,90.9 L229.2,89.7 L227.1,89.7 L224.0,89.7 L221.1,89.7 L218.3,88.0 L216.4,88.0 L212.9,88.0
+		L210.4,85.6 L208.8,84.0 L207.2,85.6 L204.9,88.0 L203.4,88.0 L201.3,86.8 L197.8,86.8 L196.5,86.8
+		L193.9,84.0 L191.5,84.0 L187.4,82.8 L185.8,80.0 L183.1,80.0 L181.1,81.6 L179.7,81.6 L177.8,81.6
+		L176.9,82.8 L174.7,82.8 L173.4,84.0 L171.7,82.8 L169.4,82.8 L168.2,84.0 L167.5,84.0 L167.1,84.0
+		L166.4,82.8 L165.0,82.8 L162.9,82.8 L161.3,82.8 L161.0,82.8 L160.0,82.8 L159.1,82.8 L157.6,82.8
+		L156.5,82.8 L155.9,81.6 L155.1,81.6 L154.3,81.6 L153.3,82.8 L152.0,82.8 L150.3,82.8 L149.1,82.8
+		L148.2,82.8 L146.7,84.0 L145.8,84.0 L144.2,82.8 L142.7,82.8 L141.5,82.8 L140.3,82.8 L139.3,82.8
+		L138.3,82.8 L136.8,82.8 L135.6,82.8 L133.6,82.8 L132.5,82.8  '/></g>
+	</g>
+	<g id="gnuplot_plot_8" ><title>resnet-101-2</title>
+<g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
+	<g transform="translate(507.9,166.0)" stroke="none" fill="black" font-family="Arial" font-size="12.00"  text-anchor="end">
+		<text><tspan font-family="Times"  font-size="10.0">resnet-101-2</tspan><tspan font-size="12.0" dy="0.00"></tspan></text>
+	</g>
+</g>
+<g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
+	<path stroke='rgb(  0,   0, 255)'  d='M516.2,162.1 L558.4,162.1 M172.4,88.0 L171.6,86.8 L171.2,86.8 L170.8,86.8 L170.4,86.8 L169.6,88.0
+		L169.2,88.0 L168.8,88.0 L167.7,89.7 L166.3,88.0 L165.5,88.0 L164.8,88.0 L164.2,88.0 L163.5,86.8
+		L162.8,86.8 L161.5,85.6 L161.2,85.6 L159.9,85.6 L159.0,84.0 L157.0,82.8 L156.4,82.8 L155.8,82.8
+		L155.0,82.8 L153.7,82.8 L153.2,82.8 L152.7,82.8 L151.7,82.8 L150.9,82.8 L150.4,82.8 L149.0,82.8
+		L148.8,82.8 L148.1,84.0 L147.7,85.6 L146.8,82.8 L146.6,84.0 L146.4,84.0 L145.8,82.8 L145.1,82.8
+		L143.5,82.8 L142.6,82.8 L142.4,82.8 L141.7,81.6 L140.9,82.8 L140.1,82.8 L139.7,82.8 L139.2,82.8
+		L138.7,82.8 L138.0,82.8 L137.2,84.0 L136.8,84.0 L136.0,84.0 L135.1,84.0 L134.7,84.0 L133.8,84.0
+		L133.7,84.0 L133.3,84.0 L132.2,82.8 L131.6,82.8 L131.2,82.8 L130.4,82.8 L129.6,82.8 L128.8,82.8
+		L127.9,82.8 L127.1,82.8 L125.8,82.8 L124.5,82.8 L123.3,82.8  '/></g>
+	</g>
+	<g id="gnuplot_plot_9" ><title>low accuracy</title>
+<g fill="none" color="gray" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
+	<g transform="translate(507.9,184.0)" stroke="none" fill="black" font-family="Arial" font-size="12.00"  text-anchor="end">
 		<text><tspan font-family="Times"  font-size="10.0">low accuracy</tspan><tspan font-size="12.0" dy="0.00"></tspan></text>
 	</g>
 </g>
 <g fill="none" color="gray" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
-	<path stroke='gray' stroke-dasharray='2,4'  d='M516.2,126.1 L558.4,126.1 M80.2,90.9 L85.2,90.9 L90.2,90.9 L95.2,90.9 L100.2,90.9 L105.2,90.9
+	<path stroke='gray' stroke-dasharray='2,4'  d='M516.2,180.1 L558.4,180.1 M80.2,90.9 L85.2,90.9 L90.2,90.9 L95.2,90.9 L100.2,90.9 L105.2,90.9
 		L110.2,90.9 L115.2,90.9 L120.2,90.9 L125.2,90.9 L130.2,90.9 L135.2,90.9 L140.2,90.9 L145.2,90.9
 		L150.2,90.9 L155.2,90.9 L160.2,90.9 L165.2,90.9 L170.2,90.9 L175.2,90.9 L180.2,90.9 L185.2,90.9
 		L190.2,90.9 L195.2,90.9 L200.2,90.9 L205.1,90.9 L210.1,90.9 L215.1,90.9 L220.1,90.9 L225.1,90.9
@@ -277,14 +328,14 @@
 		L510.0,90.9 L515.0,90.9 L520.0,90.9 L525.0,90.9 L530.0,90.9 L535.0,90.9 L540.0,90.9 L545.0,90.9
 		L550.0,90.9 L555.0,90.9 L560.0,90.9 L565.0,90.9 L570.0,90.9 L575.0,90.9  '/></g>
 	</g>
-	<g id="gnuplot_plot_7" ><title>3xspeed</title>
+	<g id="gnuplot_plot_10" ><title>3xspeed</title>
 <g fill="none" color="gray" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
-	<g transform="translate(507.9,148.0)" stroke="none" fill="black" font-family="Arial" font-size="12.00"  text-anchor="end">
+	<g transform="translate(507.9,202.0)" stroke="none" fill="black" font-family="Arial" font-size="12.00"  text-anchor="end">
 		<text><tspan font-family="Times"  font-size="10.0">3xspeed</tspan><tspan font-size="12.0" dy="0.00"></tspan></text>
 	</g>
 </g>
 <g fill="none" color="gray" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
-	<path stroke='gray' stroke-dasharray='2,4'  d='M516.2,144.1 L558.4,144.1 M286.6,422.4 L286.6,18.1  '/></g>
+	<path stroke='gray' stroke-dasharray='2,4'  d='M516.2,198.1 L558.4,198.1 M286.6,422.4 L286.6,18.1  '/></g>
 	</g>
 <g fill="none" color="white" stroke="gray" stroke-width="2.00" stroke-linecap="butt" stroke-linejoin="miter">
 </g>
