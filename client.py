@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Sep  1 21:23:s17 2018
+Created on Sat Sep  1 21:23:17 2018
 @author: admin
 """
 
 import glob
 import os
+import time
 
 LOGIC_DDS = "DDS"
 LOGIC_GROUNDTRUTH = "GroundTruth"
@@ -147,6 +148,7 @@ class Client():
         self.logic = DecisionMaker(args)
         self.filtering = Filtering(args)
         self.server = srv
+        self.lastupdatetime = 0
        
         
     def getImage(self,region):
@@ -159,7 +161,7 @@ class Client():
         x = region.x
         y = region.y
         print("ffmpeg framepath is",framePath)
-        os.system("ffmpeg -i {0} -vf scale=iw*{1}:ih*{1} -filter:v \"crop={2}:{3}:{4}:{5}\" -y {6}".format(framePath,
+        os.system("ffmpeg -loglevel error -i {0} -vf scale=iw*{1}:ih*{1} -filter:v \"crop={2}:{3}:{4}:{5}\" -y {6}".format(framePath,
                                                                                                    region.res,
                                                                                                    w,
                                                                                                    h,
@@ -173,8 +175,10 @@ class Client():
     def QueryCNN(self, Regions):
         Results = Result()
         for region in Regions:
+            tic = time.time()
             impath = self.getImage(region)
-            print("client impath is ",impath)
+            tic2 = time.time()
+            print("**********************the time of get image is ************************************",tic2-tic)
             infresult = self.server.RUNCNN(impath)
             for line in infresult:
                 lineresult = line.split(' ')
@@ -191,6 +195,8 @@ class Client():
     def getNextSegment(self,now,maxsize=4):
         Allframes = sorted(glob.glob('{}/*.png'.format(self.src)))
         print("src is ",self.src)
+        print("======================================= from last update: ",time.time()-self.lastupdatetime)
+        self.lastupdatetime = time.time()
         seg = Segment()
         now += 1
         if now == len(Allframes):
@@ -200,7 +206,7 @@ class Client():
             now +=1
             print("frame is ",frame[len(frame)-14:len(frame)-4])
             frameID = int(frame[len(frame)-14:len(frame)-4])
-            seg.frameIdList.append(frameID)
+           seg.frameIdList.append(frameID)
             count += 1
             if count == maxsize:
                 return seg, now
@@ -223,7 +229,7 @@ class Client():
         now = -1
         while True:
             segment,now = self.getNextSegment(now)
-            print("segment is",segment.frameIdList[0])
+            #print("segment is",segment.frameIdList[0])
             if segment.GetFrameIdList == []:
                 return None
             FramdIDAfterLoacalFiltering = self.filtering.Run(segment)
