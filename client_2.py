@@ -49,7 +49,10 @@ class Result():
         self.unitResults = []
     def AddResult(self, other):
         for unit in other.unitResults:
-            self.unitResults.append(unit)
+            if unit in self.unitResults:
+                continue
+            else:
+                self.unitResults.append(unit)
     def CountObjts(self):
         objs = {}
         for oneresult in self.unitResults:
@@ -132,7 +135,8 @@ class DecisionMaker():
                 #FrameSelection
                 #print("maxkey is",maxkey)
                 if maxkey[1] - maxkey[0] > 1:
-                    midframe = int(maxkey[1] - maxkey[0] / 2)
+                    midframe = int((maxkey[1] + maxkey[0]) / 2)
+                    print("midframe is :",midframe)
                     del self.DiffDic[maxkey]
                     self.DiffDic[(maxkey[0],midframe)] = -1
                     self.DiffDic[(maxkey[1],midframe)] = -1
@@ -142,7 +146,7 @@ class DecisionMaker():
                 #Croping
                 for ret in Results.unitResults:
                     if ret.confidence > self.minThres and ret.confidence < self.maxThres:
-                       if ret.res != 1:
+                       if ret.res != 1 and ret.frameID in segment.frameIdList:
                           newResolution = increaseRes(ret.res)
                           regions.append(Region(ret.frameID,
                                                 ret.x,
@@ -156,7 +160,41 @@ class DecisionMaker():
        # if self.logic == Vigil:
         #    return None
             
-            
+def checkexistInServer(frameID):
+    count = -1
+    while True:
+        path = 'Sendtoserver/' + frameID + '.png'
+        if os.path.exists(path):
+            frameID += str(count)
+            count -= 1
+        else:
+            break
+    return frameID
+
+
+def outputTofile(inputresult):
+    if type(inputresult) == list:
+        outfile = open('debug_log/regions_bug','a')
+        for region in inputresult:
+            print("region.frameID :",region.frameID,file=outfile)
+            print("region.x :",region.x,file=outfile)
+            print("region.y :",region.y,file=outfile)
+            print("region.w :",region.w,file=outfile)
+            print("region.h :",region.h,file=outfile)
+            print("region.res :",region.res,file=outfile)
+        outfile.close()
+    else:
+        outfile = open('debug_log/result_bug','a')
+        for region in inputresult.unitResults:
+            print("ret.frameID :",region.frameID,file=outfile)
+            print("ret.x :",region.x,file=outfile)
+            print("ret.y :",region.y,file=outfile)
+            print("ret.w :",region.w,file=outfile)
+            print("ret.h :",region.h,file=outfile)
+            print("ret.conf :",region.confidence,file=outfile)
+            print("ret.label :",region.label,file=outfile)
+            print("region.res :",region.res,file=outfile)
+        outfile.close()
 
 class Client():
     def __init__(self,args,srv):
@@ -173,7 +211,8 @@ class Client():
         frameID = str(region.frameID)
         frameID = frameID.zfill(10)
         framePath = self.src + '/' + frameID + '.png'
-        impath = 'Sendtoserver/' + frameID + '.png'
+        new_frameID = checkexistInServer(frameID)
+        impath = 'Sendtoserver/' + new_frameID + '.png'
         w = region.w
         h = region.h
         x = region.x
@@ -213,7 +252,6 @@ class Client():
         Allframes = sorted(glob.glob('{}/*.png'.format(self.src)))
         print("src is ",self.src)
         seg = Segment()
-        now += 1
         if now == len(Allframes):
             return seg
         print("======================================= from last update: ",time.time()-self.lastupdatetime)
@@ -235,7 +273,7 @@ class Client():
     def UpdateResult(self,frames,Results):
         for ret in Results.unitResults:
              #print("ret.frameID is",ret.frameID)
-             if ret.frameID in frames.frameIdList:
+             if ret.frameID in frames.frameIdList && ret.confidence >0.8:
                  frames.frameIdList.remove(ret.frameID)
         return frames
     
@@ -246,7 +284,7 @@ class Client():
         Out = open(OutPath,'w')
         i = 0
         for result in results.unitResults:
-            if result.frameID == self.tracker_last:
+            if result.frameID == self.tracker_last and result.confidence >0.8:
                 if i < len(now_boxes):
                     print(result.label,now_boxes[i],file=Out)
                     i += 1
@@ -259,7 +297,7 @@ class Client():
     def Tracking(self,frames,results):
         refe_boxes = []
         for result in results.unitResults:
-            if result.frameID == self.tracker_last:
+            if result.frameID == self.tracker_last and result.confidence > 0.8:
                 one_box = [result.x,result.y,result.w,result.h]
                 refe_boxes.append(one_box)
         tracker = KCF_tracker(self.tracker_last,refe_boxes,self.src)
@@ -271,7 +309,7 @@ class Client():
     
     
     def Run(self):
-        now = -1
+        now = 0
         while True:
             segment,now = self.getNextSegment(now)
             self.tracker_last = segment.frameIdList[0]
@@ -285,11 +323,13 @@ class Client():
                 print("Begin to run logic")
                 RegionsToQuery = self.logic.GetNextRegionToQuery(FramdIDAfterLoacalFiltering,
                                                                 results)
+                outputTofile(RegionsToQuery)
                 if len(RegionsToQuery) == 0:
                     break
                 print("Begin to ask CNN")
                 CNNResult = self.QueryCNN(RegionsToQuery)
                 results.AddResult(CNNResult)
+                outputTofile(results)
                 FramdIDAfterLoacalFiltering = self.UpdateResult(FramdIDAfterLoacalFiltering,results)
                 
             if len(FramdIDAfterLoacalFiltering.frameIdList) != 0:
