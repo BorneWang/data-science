@@ -9,14 +9,8 @@ import cv2
 import os
 import numpy as np
 import time
-from model import load_CNN
-from model import Run
 
 class Server():
-    def __init__(self,srcargs):
-        self.model,self.cnnargs,self.arg_params,self.aux_params = load_CNN(srcargs)
-
-
     def RUNCNN(self,impath):
         print("impath is",impath)
         im = cv2.imread(impath)
@@ -25,14 +19,7 @@ class Server():
         im_size_max = np.max(im_shape[0:2])
         outfile = impath + 'serverresult'
         tic = time.time()
-        self.cnnargs.dataset = 'voc'
-        self.cnnargs.network = 'resnet101'
-        self.cnnargs.img_short_side = im_size_min
-        self.cnnargs.img_long_side = im_size_max
-        self.cnnargs.image = impath
-        self.cnnargs.out= outfile
-        Run(self.model,self.cnnargs,self.arg_params,self.aux_params)
-        #os.system("python3 /home/bowen/python-DDS/rcnn/demo2.py --gpu 0 --dataset voc --network resnet101 --params rcnn/resnet_voc0712-0010.params --img-short-side {} --img-long-side {} --image {} --out {}".format(im_size_min,im_size_max,impath,outfile))
+        os.system("python3 demo2.py --gpu 0 --dataset voc --network resnet101 --params resnet_voc0712-0010.params --img-short-side {} --img-long-side {} --image {} --out {}".format(im_size_min,im_size_max,impath,outfile))
         tic2 = time.time()
         print("Run Cnn time is ",tic2-tic)
         CNN_result = []
