@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Sep  1 21:23:08 2018
+Created on Sat Sep  1 21:23:07 2018
 @author: admin
 """
 
@@ -13,10 +13,10 @@ from model import load_CNN
 from model import Run
 
 class Server():
-    def __init__(self,args):
-        self.model,self.cnnargs = load_CNN(args)
-    
-    
+    def __init__(self,srcargs):
+        self.model,self.cnnargs,self.arg_params,self.aux_params = load_CNN(srcargs)
+
+
     def RUNCNN(self,impath):
         print("impath is",impath)
         im = cv2.imread(impath)
@@ -31,7 +31,7 @@ class Server():
         self.cnnargs.img_long_side = im_size_max
         self.cnnargs.image = impath
         self.cnnargs.out= outfile
-        Run(self.mod,self.cnnargs)
+        Run(self.model,self.cnnargs,self.arg_params,self.aux_params)
         #os.system("python3 /home/bowen/python-DDS/rcnn/demo2.py --gpu 0 --dataset voc --network resnet101 --params rcnn/resnet_voc0712-0010.params --img-short-side {} --img-long-side {} --image {} --out {}".format(im_size_min,im_size_max,impath,outfile))
         tic2 = time.time()
         print("Run Cnn time is ",tic2-tic)
