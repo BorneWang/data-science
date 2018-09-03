@@ -51,8 +51,8 @@ class Result():
         for unit in other.unitResults:
             self.unitResults.append(unit)
     def CountObjts(self):
-        objs = []
-        for oneresult in self.unitResult:
+        objs = {}
+        for oneresult in self.unitResults:
             frameID = oneresult.frameID
             if frameID in objs:
                 objs[frameID] += 1
@@ -102,7 +102,9 @@ class DecisionMaker():
                 regions.append(Region(frameId,0,0,1,1,1))
             return regions
         if self.logic == LOGIC_DDS:
-            if Results == []:
+            #print("Begin DDS logic")
+            if len(Results.unitResults) == 0:
+                self.DiffDic = {}
                 regions.append(Region(frames[0],0,0,1,1,0.25))
                 regions.append(Region(frames[len(frames)-1],0,0,1,1,0.25))
                 self.DiffDic[(frames[0],frames[len(frames)-1])] = -1
@@ -112,36 +114,42 @@ class DecisionMaker():
                 if self.pick_count == self.Maxpick:
                     self.pick_count = 0
                     return regions
-                objs = Results.CountObjs()          #type objs is DIC
+                objs = Results.CountObjts()          #type objs is DIC
+                #print("objs are", objs)
                 #update DiffDic
+                #print("my diffDIc are",self.DiffDic)
                 maxkey = ()
                 maxdiff = -1
                 for key in self.DiffDic:
+                    #print("key is",key)
                     diff = objs[key[0]] - objs[key[1]]
-                    self.DiffDic[key] = abs(diff)
+                    if diff < 0:
+                       diff = -diff
+                    self.DiffDic[key] = diff
                     if diff > maxdiff:
                         maxkey = key
                         
-                        #FrameSelection
-                        if maxkey[1] - maxkey[0] > 1:
-                            midframe = int(maxkey[1] - maxkey[0] / 2)
-                            del self.DiffDic[maxkey]
-                            self.DiffDic[(maxkey[0],midframe)] = -1
-                            self.DiffDic[(maxkey[1],midframe)] = -1
-                            regions.append(Region(midframe,0,0,1,1,0.25))
-                            self.pick_count += 1
+                #FrameSelection
+                #print("maxkey is",maxkey)
+                if maxkey[1] - maxkey[0] > 1:
+                    midframe = int(maxkey[1] - maxkey[0] / 2)
+                    del self.DiffDic[maxkey]
+                    self.DiffDic[(maxkey[0],midframe)] = -1
+                    self.DiffDic[(maxkey[1],midframe)] = -1
+                    regions.append(Region(midframe,0,0,1,1,0.25))
+                    self.pick_count += 1
             
-                        #Croping
-                        for ret in Results:
-                            if ret.confidence > self.minThres and ret.confidence < self.maxThres:
-                                if ret.res != 1:
-                                    newResolution = increaseRes(ret.res)
-                                    regions.append(Region(ret.frameID,
-                                                              ret.x,
-                                                              ret.y,
-                                                              ret.w,
-                                                              ret.h,
-                                                              newResolution))
+                #Croping
+                for ret in Results.unitResults:
+                    if ret.confidence > self.minThres and ret.confidence < self.maxThres:
+                       if ret.res != 1:
+                          newResolution = increaseRes(ret.res)
+                          regions.append(Region(ret.frameID,
+                                                ret.x,
+                                                ret.y,
+                                                ret.w,
+                                                ret.h,
+                                                newResolution))
             return regions
         #if self.logic == Noscope:
         #    return None
@@ -158,7 +166,7 @@ class Client():
         self.server = srv
         self.lastupdatetime = 0
         self.tracker_last = 0
-        self.outPath = args.output
+        #self.outPath = args.output
        
         
     def getImage(self,region):
@@ -170,15 +178,15 @@ class Client():
         h = region.h
         x = region.x
         y = region.y
-        print("ffmpeg framepath is",framePath)
-        os.system("ffmpeg -loglevel error -i {0} -vf scale=iw*{1}:ih*{1} -filter:v \"crop={2}:{3}:{4}:{5}\" -y {6}".format(framePath,
+        #print("ffmpeg framepath is",framePath)
+        os.system("ffmpeg -loglevel error -i {0} -vf scale=iw*{1}:ih*{1} -filter:v \"crop=iw*{2}:ih*{3}:iw*{4}:ih*{5}\" -y {6}".format(framePath,
                                                                                                    region.res,
                                                                                                    w,
                                                                                                    h,
                                                                                                    x,
                                                                                                    y,
                                                                                                    impath))
-        print("ffmpeg impath is",impath)
+        #print("ffmpeg impath is",impath)
         return impath
  
               
@@ -191,13 +199,12 @@ class Client():
             print("**********************the time of get image is ************************************",tic2-tic)
             infresult = self.server.RUNCNN(impath)
             for line in infresult:
-                lineresult = line.split(' ')
-                x = lineresult[0] 
-                y = lineresult[1]
-                w = lineresult[2]
-                h = lineresult[3]
-                conf = lineresult[4]
-                label = lineresult[5]
+                x = line[0] 
+                y = line[1]
+                w = line[2]
+                h = line[3]
+                conf = line[4]
+                label = line[5]
                 uniret = UnitResult(region.frameID,x,y,w,h,conf,label,region.res)
                 Results.unitResults.append(uniret)
         return Results
@@ -205,22 +212,23 @@ class Client():
     def getNextSegment(self,now,maxsize=5):
         Allframes = sorted(glob.glob('{}/*.png'.format(self.src)))
         print("src is ",self.src)
-        print("======================================= from last update: ",time.time()-self.lastupdatetime)
-        self.lastupdatetime = time.time()
         seg = Segment()
         now += 1
         if now == len(Allframes):
             return seg
+        print("======================================= from last update: ",time.time()-self.lastupdatetime)
+        self.lastupdatetime = time.time()
         count = 0
         for frame in Allframes[now:]:
             now +=1
-            print("frame is ",frame[len(frame)-14:len(frame)-4])
+            #print("frame is ",frame[len(frame)-14:len(frame)-4])
             frameID = int(frame[len(frame)-14:len(frame)-4])
             seg.frameIdList.append(frameID)
             count += 1
             if count == maxsize:
                 return seg, now
         self.tracker_last = seg.frameIdList[0]
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!the last tracker is (int seg)!!!!!!!!!!!!!!!!",self.tracker_last)
         return seg,now      
         
 
@@ -234,15 +242,19 @@ class Client():
         return frames
     
     def Tracking_label(self,frameID,now_boxes,results):
+        frameID = str(frameID)
+        frameID = frameID.zfill(10)
         OutPath = 'Clienttracking/' + frameID + '.result'
+        Out = open(OutPath,'w')
         i = 0
         for result in results.unitResults:
             if result.frameID == self.tracker_last:
                 if i < len(now_boxes):
-                    print(result.label,now_boxes[i],file=OutPath)
+                    print(result.label,now_boxes[i],file=Out)
                     i += 1
                 else:
                     break
+        Out.close()
                 
     
     
@@ -264,19 +276,22 @@ class Client():
         now = -1
         while True:
             segment,now = self.getNextSegment(now)
-            #print("segment is",segment.frameIdList[0])
+            print("the last tracker is ",self.tracker_last)
             if segment.GetFrameIdList == []:
                 return None
             FramdIDAfterLoacalFiltering = self.filtering.Run(segment)
             results = Result()
             RegionsToQuery = []
             while True:
+                print("Begin to run logic")
                 RegionsToQuery = self.logic.GetNextRegionToQuery(FramdIDAfterLoacalFiltering,
                                                                 results)
                 if len(RegionsToQuery) == 0:
                     break
+                print("Begin to ask CNN")
                 CNNResult = self.QueryCNN(RegionsToQuery)
                 results.AddResult(CNNResult)
                 FramdIDAfterLoacalFiltering = self.UpdateResult(FramdIDAfterLoacalFiltering,results)
+                
             if len(FramdIDAfterLoacalFiltering.frameIdList) != 0:
                 self.Tracking(FramdIDAfterLoacalFiltering,results)
