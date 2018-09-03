@@ -227,8 +227,6 @@ class Client():
             count += 1
             if count == maxsize:
                 return seg, now
-        self.tracker_last = seg.frameIdList[0]
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!the last tracker is (int seg)!!!!!!!!!!!!!!!!",self.tracker_last)
         return seg,now      
         
 
@@ -276,6 +274,7 @@ class Client():
         now = -1
         while True:
             segment,now = self.getNextSegment(now)
+            self.tracker_last = segment.frameIdList[0]
             print("the last tracker is ",self.tracker_last)
             if segment.GetFrameIdList == []:
                 return None
