@@ -31,18 +31,22 @@ class Server():
         self.cnnargs.image = impath
         self.cnnargs.out= outfile
         print("in server.py, boxid = ",boxid)
-        CnnRawResults = Run(self.model,self.cnnargs,self.arg_params,self.aux_params,boxid)
-        #os.system("python3 /home/bowen/python-DDS/rcnn/demo2.py --gpu 0 --dataset voc --network resnet101 --params rcnn/resnet_voc0712-0010.params --img-short-side {} --img-long-side {} --image {} --out {}".format(im_size_min,im_size_max,impath,outfile))
+        CnnRawResults = Run(self.model,self.cnnargs,self.arg_params,self.aux_params,boxid)     
+        #os.system("python3 /home/bowen/python-DDS/rcnn/demo2.py --gpu 0 --dataset voc --network resnet101 --params rcnn/resnet_voc0712-0010.param
+s --img-short-side {} --img-long-side {} --image {} --out {}".format(im_size_min,im_size_max,impath,outfile))
         tic2 = time.time()
         print("Run Cnn time is ",tic2-tic)
         CNN_result = []
-        for lineresult in CnnRawResults:
-            x = float(lineresult[2]) / im_shape[1]
-            y = float(lineresult[3]) / im_shape[0]
-            w = (float(lineresult[4]) - float(lineresult[2])) / im_shape[1]
-            h = (float(lineresult[5]) - float(lineresult[3])) / im_shape[0]
-            conf = float(lineresult[1])
-            label = lineresult[0]
-            box_id = lineresult[6]
-            CNN_result.append([x,y,w,h,conf,label,box_id])
+        if len(CnnRawResults) == 0:
+            CNN_result.append([0,0,0,0,0.1,'no obj',boxid])
+        else:
+            for lineresult in CnnRawResults:
+                x = float(lineresult[2]) / im_shape[1]
+                y = float(lineresult[3]) / im_shape[0]
+                w = (float(lineresult[4]) - float(lineresult[2])) / im_shape[1]
+                h = (float(lineresult[5]) - float(lineresult[3])) / im_shape[0]
+                conf = float(lineresult[1])
+                label = lineresult[0]
+                box_id = lineresult[6]
+                CNN_result.append([x,y,w,h,conf,label,box_id])
         return CNN_result
