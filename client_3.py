@@ -34,7 +34,7 @@ class Segment():
         return self.frameIdList
 
 class UnitResult():
-    def __init__(self,frameID,x,y,w,h,confidence,label,res):
+    def __init__(self,frameID,x,y,w,h,confidence,label,res,box_id=0):
         self.frameID = frameID
         self.x = x
         self.y = y
@@ -43,6 +43,7 @@ class UnitResult():
         self.confidence = confidence
         self.label = label
         self.res = res
+        self.boxID = box_id
 
 class Result():
     def __init__(self):
@@ -89,7 +90,7 @@ class DecisionMaker():
         self.logic = args.logic
         self.src == args.src
         # DDS fields
-        self.Maxpick = 3
+        self.Maxpick = 4
         self.pick_count = 0
         self.maxThres = 0.8
         self.minThres = 0.3
@@ -116,6 +117,17 @@ class DecisionMaker():
                 self.pick_count +=2
                 return regions
             else:
+                #Croping
+                for ret in Results.unitResults:
+                    if ret.confidence > self.minThres and ret.confidence < self.maxThres:
+                       if ret.res != 1:
+                           newResolution = increaseRes(ret.res)
+                           regions.append(Region(ret.frameID,
+                                                 ret.x,
+                                                 ret.y,
+                                                 ret.w,
+                                                 ret.h,
+                                                 newResolution))
                 if self.pick_count == self.Maxpick:
                     self.pick_count = 0
                     return regions
@@ -144,36 +156,23 @@ class DecisionMaker():
                     self.DiffDic[(maxkey[1],midframe)] = -1
                     regions.append(Region(midframe,0,0,1,1,0.25))
                     self.pick_count += 1
-            
-                #Croping
-                for ret in Results.unitResults:
-                    if ret.confidence > self.minThres and ret.confidence < self.maxThres:
-                       if ret.res != 1 and ret.frameID in segment.frameIdList:
-                          newResolution = increaseRes(ret.res)
-                          regions.append(Region(ret.frameID,
-                                                ret.x,
-                                                ret.y,
-                                                ret.w,
-                                                ret.h,
-                                                newResolution))
             return regions
         #if self.logic == Noscope:
         #    return None
        # if self.logic == Vigil:
         #    return None
-    def UpdateResult(self,frames,Results):
-        if self.logic == LOGIC_DDS:
-            for ret in Results.unitResults:
-                #print("ret.frameID is",ret.frameID)
-                if ret.frameID in frames.frameIdList and (ret.confidence >self.maxThres or ret.confidence < self.minThres):
-                    frames.frameIdList.remove(ret.frameID)
-            return frames
-        else:
-            for ret in Results.unitResults:
-                #print("ret.frameID is",ret.frameID)
-                if ret.frameID in frames.frameIdList:
-                    frames.frameIdList.remove(ret.frameID)
-            return frames
+    
+    def updateResults(results):
+        for i in range(len(results.unitResults)):
+            for j in range(i+1,len(results.unitResults)):
+                if results.unitResults[i].frameID == results.unitResults[j].frameID:
+                    if results.unitResults[i].boxID == results.unitResults[j].boxID:
+                        results.unitResults[i].res = results.unitResults[j].res
+                        results.unitResults[i].confidence = results.unitResults[j].confidence
+                        results.unitResults.remove(results.unitResults[j])
+                
+    
+    
     
     def Tracking_label(self,frameID,now_boxes,results):
         frameID = str(frameID)
@@ -255,19 +254,16 @@ class Client():
         frameID = frameID.zfill(10)
         framePath = self.src + '/' + frameID + '.png'
         new_frameID = checkexistInServer(frameID)
+        tempPath = 'tempReserve/' + new_frameID + '.png'
         impath = 'Sendtoserver/' + new_frameID + '.png'
         w = region.w
         h = region.h
         x = region.x
         y = region.y
         #print("ffmpeg framepath is",framePath)
-        os.system("ffmpeg -loglevel error -i {0} -vf scale=iw*{1}:ih*{1} -filter:v \"crop=iw*{2}:ih*{3}:iw*{4}:ih*{5}\" -y {6}".format(framePath,
-                                                                                                   region.res,
-                                                                                                   w,
-                                                                                                   h,
-                                                                                                   x,
-                                                                                                   y,
-                                                                                                   impath))
+        os.system("ffmpeg -loglevel error -i {} -filter:v \"crop=iw*{}:ih*{}:iw*{}:ih*{}\" -y {}".format(framePath,w,h,x,y,tempPath))
+        os.system("ffmpeg -loglevel error -i {0} -vf scale=iw*{1}:ih*{1}".format(tempPath,region.res))
+        os.system("rm {}".format(tempPath))
         #print("ffmpeg impath is",impath)
         return impath
  
@@ -287,11 +283,12 @@ class Client():
                 h = line[3]
                 conf = line[4]
                 label = line[5]
-                uniret = UnitResult(region.frameID,x,y,w,h,conf,label,region.res)
+                box_id = line[6]
+                uniret = UnitResult(region.frameID,x,y,w,h,conf,label,region.res,box_id)
                 Results.unitResults.append(uniret)
         return Results
     
-    def getNextSegment(self,now,maxsize=5):
+    def getNextSegment(self,now,maxsize=8):
         Allframes = sorted(glob.glob('{}/*.png'.format(self.src)))
         print("src is ",self.src)
         seg = Segment()
@@ -309,6 +306,15 @@ class Client():
             if count == maxsize:
                 return seg, now
         return seg,now      
+    
+    
+    
+    def UpdateFrameList(self,frames,Results):
+        for ret in Results.unitResults:
+            #print("ret.frameID is",ret.frameID)
+            if ret.frameID in frames.frameIdList:
+                frames.frameIdList.remove(ret.frameID)
+        return frames
     
     
     def Run(self):
@@ -333,7 +339,9 @@ class Client():
                 CNNResult = self.QueryCNN(RegionsToQuery)
                 results.AddResult(CNNResult)
                 outputTofile(results)
-                FramdIDAfterLoacalFiltering = self.logic.UpdateResult(FramdIDAfterLoacalFiltering,results)
+                FramdIDAfterLoacalFiltering = self.UpdateFrameList(FramdIDAfterLoacalFiltering,results)
+                results = self.logic.updateResults(results)
+                
                 
             if len(FramdIDAfterLoacalFiltering.frameIdList) != 0:
                 self.logic.Tracking(FramdIDAfterLoacalFiltering,results)
