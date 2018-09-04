@@ -53,12 +53,12 @@ def f1_eval(pred,truth,metric_iou=0.5):
                 FN += 1
         else:
             FP += 1
-        
-    recall = TP / (TP + FN)
-    precision = TP / (TP + FP)
 
-
-    f1 = 2 * recall * precision / (recall + precision)
-
+    if TP != 0:
+       recall = TP / (TP + FN)
+       precision = TP / (TP + FP)
+       f1 = 2 * recall * precision / (recall + precision)
+    else:
+       f1 = 0
 
     return f1
