@@ -9,7 +9,7 @@ from f1_score import f1_eval
 
 def Load_Truth(truthPath):
     truth = {}
-    with open(turthPath) as f:
+    with open(truthPath) as f:
         for line in f:
             ret = line.split(',')
             frameID = int(ret[0])
@@ -25,8 +25,8 @@ def Load_Truth(truthPath):
             else:
                 if confidence > 0.3:
                     truth[frameID] = []
-                    turth[frameID].append([x,y,w,h,label])
-    return turth
+                    truth[frameID].append([x,y,w,h,label])
+    return truth
             
 def Load_Pred(args):
     pred = {}
@@ -71,16 +71,16 @@ def main():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--truth', type=str, default='',help='GroundTruth')
     parser.add_argument('--logic', type=str, help='logic')
-    parser.add_argument('--ServerSideResults', type=str, default='Results/serverSideResults', help='Server side results')
+    parser.add_argument('--ServerSideResults', type=str, default='Results/serverSideResults', help='Server')
     parser.add_argument('--ClientSideResults', type=str, help='Server side results')
-    parser.add_argument('--ImageSendToServer', type=str, default='Sendtosercer','help='Image send to server')
+    parser.add_argument('--ImageSendToServer', type=str, default='Sendtosercer',help='Image send to server')
     args = parser.parse_args()
    
     truth = Load_Truth(args.truth)
     pred = Load_Pred(args)
     f1_scores = []
     for key in pred:
-        f1_scores.append(f1_eval(pred[key],turth[key]))
+        f1_scores.append(f1_eval(pred[key],truth[key]))
         
     summ = 0
     for i in f1_scores:
