@@ -89,14 +89,8 @@ def outputTofile(inputresult):
             print("region.res :",region.res,file=outfile)
         outfile.close()
     else:
-        outfile = open('debug_log/result_bug','a')
+        outfile = open('Results/serverSideResults','a')
         for region in inputresult.unitResults:
-            print("ret.frameID :",region.frameID,file=outfile)
-            print("ret.x :",region.x,file=outfile)
-            print("ret.y :",region.y,file=outfile)
-            print("ret.w :",region.w,file=outfile)
-            print("ret.h :",region.h,file=outfile)
-            print("ret.conf :",region.confidence,file=outfile)
-            print("ret.label :",region.label,file=outfile)
-            print("region.res :",region.res,file=outfile)
+            print(region.frameID,region.x,region.y,region.w,region.h,
+                  region.label,region.confidence,region.res,sep=',',file=outfile)
         outfile.close()
