@@ -12,7 +12,7 @@ from symnet.model import load_param, check_shape
 
 
 def load_CNN(srcargs):
-    ctx = mx.gpu(0)
+    ctx = mx.cpu(0)
     arg_params, aux_params = load_param(srcargs.params, ctx=ctx)
     cnnargs = cnnparse_args()
     cnnargs.src = srcargs.src
@@ -24,7 +24,7 @@ def load_CNN(srcargs):
     mod = Module(sym, data_names, label_names, context=ctx)
     return mod,cnnargs,arg_params,aux_params
 
-def Run(mod, cnnargs, arg_params, aux_params):
+def Run(mod, cnnargs, arg_params, aux_params,boxid=0):
     class_names = get_class_names(cnnargs.dataset, cnnargs)
     # print config
     #print('called with cnnargs\n{}'.format(pprint.pformat(vars(cnnargs))))
@@ -73,17 +73,27 @@ def Run(mod, cnnargs, arg_params, aux_params):
                     conf_thresh=cnnargs.rcnn_conf_thresh)
 
     # print out
+    cnnResult = []
     out = open(cnnargs.out,'w')
     box_id = 0
-    for [cls, conf, x1, y1, x2, y2] in det:
-        if cls > 0 and conf > cnnargs.vis_thresh:
-            print(class_names[int(cls)], conf, x1, y1, x2, y2, box_id, sep=' ', file=out)
-            box_id += 1
+    print("in model.py run: boxid = ",boxid)
+    if boxid != 0:
+        for [cls, conf, x1, y1, x2, y2] in det:
+            if cls > 0 and conf > cnnargs.vis_thresh:
+                print(class_names[int(cls)], conf, x1, y1, x2, y2, boxid, sep=' ', file=out)
+                cnnResult.append([class_names[int(cls)], conf, x1, y1, x2, y2, boxid])
+    else:    
+        for [cls, conf, x1, y1, x2, y2] in det:
+            if cls > 0 and conf > cnnargs.vis_thresh:
+                print(class_names[int(cls)], conf, x1, y1, x2, y2, box_id, sep=' ', file=out)
+                cnnResult.append([class_names[int(cls)], conf, x1, y1, x2, y2, box_id])
+                box_id += 1
     out.close()
 
     # if vis
     if cnnargs.vis:
         vis_detection(im_orig, det, class_names, thresh=cnnargs.vis_thresh)
+    return cnnResult    
 
 
 def cnnparse_args():
