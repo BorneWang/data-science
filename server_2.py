@@ -31,8 +31,7 @@ class Server():
         self.cnnargs.image = impath
         self.cnnargs.out= outfile
         Run(self.model,self.cnnargs,self.arg_params,self.aux_params)
-        #os.system("python3 /home/bowen/python-DDS/rcnn/demo2.py --gpu 0 --dataset voc --network resnet101 --params rcnn/resnet_voc0712-0010.param
-s --img-short-side {} --img-long-side {} --image {} --out {}".format(im_size_min,im_size_max,impath,outfile))
+        #os.system("python3 /home/bowen/python-DDS/rcnn/demo2.py --gpu 0 --dataset voc --network resnet101 --params rcnn/resnet_voc0712-0010.params --img-short-side {} --img-long-side {} --image {} --out {}".format(im_size_min,im_size_max,impath,outfile))
         tic2 = time.time()
         print("Run Cnn time is ",tic2-tic)
         CNN_result = []
@@ -45,5 +44,6 @@ s --img-short-side {} --img-long-side {} --image {} --out {}".format(im_size_min
                 h = (float(lineresult[5]) - float(lineresult[3])) / im_shape[0]
                 conf = float(lineresult[1])
                 label = lineresult[0]
-                CNN_result.append([x,y,w,h,conf,label])
+                box_id = int(lineresult[6])
+                CNN_result.append([x,y,w,h,conf,label,box_id])
         return CNN_result
