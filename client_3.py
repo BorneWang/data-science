@@ -19,13 +19,14 @@ RES_HIGH = 0.75
 RES_LIST = [RES_LOW, RES_MEDIUM, RES_HIGH]
 
 class Region():
-    def __init__(self,frameID,x,y,w,h,res):
+    def __init__(self,frameID,x,y,w,h,res,box_id=0):
         self.frameID = frameID
         self.x = x
         self.y = y
         self.w = w
         self.h = h
         self.res = res
+        self.boxID = box_id
 
 class Segment():
     def __init__(self):
@@ -88,7 +89,7 @@ class Filtering():
 class DecisionMaker():
     def __init__(self,args):
         self.logic = args.logic
-        self.src == args.src
+        self.src = args.src
         # DDS fields
         self.Maxpick = 4
         self.pick_count = 0
@@ -121,13 +122,17 @@ class DecisionMaker():
                 for ret in Results.unitResults:
                     if ret.confidence > self.minThres and ret.confidence < self.maxThres:
                        if ret.res != 1:
+                           print("Before renew resolution")
+                           print("frameID:",ret.frameID," res:",ret.res," boxID",ret.boxID,"confidence:",ret.confidence)
                            newResolution = increaseRes(ret.res)
+                           print("frameID:",ret.frameID," res:",newResolution," boxID",ret.boxID)
                            regions.append(Region(ret.frameID,
                                                  ret.x,
                                                  ret.y,
                                                  ret.w,
                                                  ret.h,
-                                                 newResolution))
+                                                 newResolution,
+                                                 ret.boxID))
                 if self.pick_count == self.Maxpick:
                     self.pick_count = 0
                     return regions
@@ -162,15 +167,30 @@ class DecisionMaker():
        # if self.logic == Vigil:
         #    return None
     
-    def updateResults(results):
+    def updateResults(self,results):
+        remove_index = []
+        new_results = Result()
         for i in range(len(results.unitResults)):
             for j in range(i+1,len(results.unitResults)):
                 if results.unitResults[i].frameID == results.unitResults[j].frameID:
                     if results.unitResults[i].boxID == results.unitResults[j].boxID:
+                        print("Before recover res !!!")
+                        print("frameID :",results.unitResults[i].frameID," res:",results.unitResults[i].res,"confidence:",results.unitResults[i].c
+onfidence,"bbox :",results.unitResults[i].boxID)
+                        print("frameID :",results.unitResults[j].frameID," res:",results.unitResults[j].res,"confidence:",results.unitResults[j].c
+onfidence,"bbox :",results.unitResults[j].boxID)
                         results.unitResults[i].res = results.unitResults[j].res
+                        print("After recover res !!!")
                         results.unitResults[i].confidence = results.unitResults[j].confidence
-                        results.unitResults.remove(results.unitResults[j])
-                
+                        print("frameID :",results.unitResults[i].frameID," res:",results.unitResults[i].res,"confidence:",results.unitResults[i].c
+onfidence,"bbox :",results.unitResults[i].boxID)
+                        remove_index.append(j)
+        for i in range(len(results.unitResults)):
+            if i in remove_index:
+                continue
+            else:
+                new_results.unitResults.append(results.unitResults[i])
+        return new_results        
     
     
     
@@ -237,7 +257,6 @@ def outputTofile(inputresult):
             print("ret.label :",region.label,file=outfile)
             print("region.res :",region.res,file=outfile)
         outfile.close()
-
 class Client():
     def __init__(self,args,srv):
         self.src = args.src
@@ -262,7 +281,7 @@ class Client():
         y = region.y
         #print("ffmpeg framepath is",framePath)
         os.system("ffmpeg -loglevel error -i {} -filter:v \"crop=iw*{}:ih*{}:iw*{}:ih*{}\" -y {}".format(framePath,w,h,x,y,tempPath))
-        os.system("ffmpeg -loglevel error -i {0} -vf scale=iw*{1}:ih*{1}".format(tempPath,region.res))
+        os.system("ffmpeg -loglevel error -i {0} -vf scale=iw*{1}:ih*{1} {2}".format(tempPath,region.res,impath))
         os.system("rm {}".format(tempPath))
         #print("ffmpeg impath is",impath)
         return impath
@@ -275,7 +294,8 @@ class Client():
             impath = self.getImage(region)
             tic2 = time.time()
             print("**********************the time of get image is ************************************",tic2-tic)
-            infresult = self.server.RUNCNN(impath)
+            print("the box id is :",region.boxID)
+            infresult = self.server.RUNCNN(impath,region.boxID)
             for line in infresult:
                 x = line[0] 
                 y = line[1]
@@ -341,7 +361,7 @@ class Client():
                 outputTofile(results)
                 FramdIDAfterLoacalFiltering = self.UpdateFrameList(FramdIDAfterLoacalFiltering,results)
                 results = self.logic.updateResults(results)
-                
+               
                 
             if len(FramdIDAfterLoacalFiltering.frameIdList) != 0:
                 self.logic.Tracking(FramdIDAfterLoacalFiltering,results)
