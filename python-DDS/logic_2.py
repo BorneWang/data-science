@@ -137,7 +137,7 @@ class DecisionMaker():
                 if i < len(now_boxes):
                     print(result.frameID,now_boxes[i][0],now_boxes[i][1],
                           now_boxes[i][2],now_boxes[i][3],result.label,
-                          seq=',',file=Out)
+                          sep=',',file=Out)
                     i += 1
                 else:
                     break
