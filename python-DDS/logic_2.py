@@ -100,26 +100,29 @@ class DecisionMaker():
         #    return None
     
     def updateResults(self,results):
-        remove_index = []
-        new_results = Result()
-        for i in range(len(results.unitResults)):
-            for j in range(i+1,len(results.unitResults)):
-                if results.unitResults[i].frameID == results.unitResults[j].frameID:
-                    if results.unitResults[i].boxID == results.unitResults[j].boxID:
-                        print("Before recover res !!!")
-                        print("frameID :",results.unitResults[i].frameID," res:",results.unitResults[i].res,"confidence:",results.unitResults[i].confidence,"bbox :",results.unitResults[i].boxID)
-                        print("frameID :",results.unitResults[j].frameID," res:",results.unitResults[j].res,"confidence:",results.unitResults[j].confidence,"bbox :",results.unitResults[j].boxID)
-                        results.unitResults[i].res = results.unitResults[j].res
-                        print("After recover res !!!")
-                        results.unitResults[i].confidence = results.unitResults[j].confidence
-                        print("frameID :",results.unitResults[i].frameID," res:",results.unitResults[i].res,"confidence:",results.unitResults[i].confidence,"bbox :",results.unitResults[i].boxID)
-                        remove_index.append(j)
-        for i in range(len(results.unitResults)):
-            if i in remove_index:
-                continue
-            else:
-                new_results.unitResults.append(results.unitResults[i])
-        return new_results        
+        if self.logic == 'DDS':
+            remove_index = []
+            new_results = Result()
+            for i in range(len(results.unitResults)):
+                for j in range(i+1,len(results.unitResults)):
+                    if results.unitResults[i].frameID == results.unitResults[j].frameID:
+                        if results.unitResults[i].boxID == results.unitResults[j].boxID:
+                            print("Before recover res !!!")
+                            print("frameID :",results.unitResults[i].frameID," res:",results.unitResults[i].res,"confidence:",results.unitResults[i].confidence,"bbox :",results.unitResults[i].boxID)
+                            print("frameID :",results.unitResults[j].frameID," res:",results.unitResults[j].res,"confidence:",results.unitResults[j].confidence,"bbox :",results.unitResults[j].boxID)
+                            results.unitResults[i].res = results.unitResults[j].res
+                            print("After recover res !!!")
+                            results.unitResults[i].confidence = results.unitResults[j].confidence
+                            print("frameID :",results.unitResults[i].frameID," res:",results.unitResults[i].res,"confidence:",results.unitResults[i].confidence,"bbox :",results.unitResults[i].boxID)
+                            remove_index.append(j)
+            for i in range(len(results.unitResults)):
+                if i in remove_index:
+                    continue
+                else:
+                    new_results.unitResults.append(results.unitResults[i])
+            return new_results
+        if self.logic == 'GroundTruth':
+            return results
     
     
     
@@ -143,13 +146,17 @@ class DecisionMaker():
     
     
     def Tracking(self,frames,results):
-        refe_boxes = []
-        for result in results.unitResults:
-            if result.frameID == self.tracker_last and result.confidence > self.maxThres:
-                one_box = [result.x,result.y,result.w,result.h]
-                refe_boxes.append(one_box)
-        tracker = KCF_tracker(self.tracker_last,refe_boxes,self.src)
-        for frameID in frames.frameIdList:
-            now_boxes = tracker.Update(frameID)
-            self.Tracking_label(frameID,now_boxes,results)
+        if self.logic == 'DDS': 
+            refe_boxes = []
+            for result in results.unitResults:
+                if result.frameID == self.tracker_last and result.confidence > self.maxThres:
+                    one_box = [result.x,result.y,result.w,result.h]
+                    refe_boxes.append(one_box)
+            tracker = KCF_tracker(self.tracker_last,refe_boxes,self.src)
+            for frameID in frames.frameIdList:
+                now_boxes = tracker.Update(frameID)
+                self.Tracking_label(frameID,now_boxes,results)
+                
+        if self.logic == 'GroundTruth':
+            return None
                 
