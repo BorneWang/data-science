@@ -12,7 +12,7 @@ from symnet.model import load_param, check_shape
 
 
 def load_CNN(srcargs):
-    ctx = mx.cpu(0)
+    ctx = mx.gpu(0)
     arg_params, aux_params = load_param(srcargs.params, ctx=ctx)
     cnnargs = cnnparse_args()
     cnnargs.src = srcargs.src
@@ -108,7 +108,7 @@ def cnnparse_args():
     cnnparser.add_argument('--gpu', type=str, default='0', help='gpu device eg. 0')
     cnnparser.add_argument('--vis', action='store_true', help='display results')
     cnnparser.add_argument('--out', type=str, help='output')
-    cnnparser.add_argument('--vis-thresh', type=float, default=0.3, help='threshold display boxes')
+    cnnparser.add_argument('--vis-thresh', type=float, default=0.1, help='threshold display boxes')
     # faster rcnn params
     cnnparser.add_argument('--img-short-side', type=int, default=600)
     cnnparser.add_argument('--img-long-side', type=int, default=1000)
