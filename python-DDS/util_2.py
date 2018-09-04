@@ -92,5 +92,5 @@ def outputTofile(inputresult):
         outfile = open('Results/serverSideResults','a')
         for region in inputresult.unitResults:
             print(region.frameID,region.x,region.y,region.w,region.h,
-                  region.label,region.confidence,region.res,seq=',',file=outfile)
+                  region.label,region.confidence,region.res,sep=',',file=outfile)
         outfile.close()
