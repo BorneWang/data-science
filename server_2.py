@@ -16,7 +16,7 @@ class Server():
         self.model,self.cnnargs,self.arg_params,self.aux_params = load_CNN(srcargs)
 
 
-    def RUNCNN(self,impath):
+    def RUNCNN(self,impath,boxid):
         print("impath is",impath)
         im = cv2.imread(impath)
         im_shape = im.shape
@@ -30,20 +30,20 @@ class Server():
         self.cnnargs.img_long_side = im_size_max
         self.cnnargs.image = impath
         self.cnnargs.out= outfile
-        Run(self.model,self.cnnargs,self.arg_params,self.aux_params)
-        #os.system("python3 /home/bowen/python-DDS/rcnn/demo2.py --gpu 0 --dataset voc --network resnet101 --params rcnn/resnet_voc0712-0010.params --img-short-side {} --img-long-side {} --image {} --out {}".format(im_size_min,im_size_max,impath,outfile))
+        print("in server.py, boxid = ",boxid)
+        CnnRawResults = Run(self.model,self.cnnargs,self.arg_params,self.aux_params,boxid)
+        #os.system("python3 /home/bowen/python-DDS/rcnn/demo2.py --gpu 0 --dataset voc --network resnet101 --params rcnn/resnet_voc0712-0010.param
+s --img-short-side {} --img-long-side {} --image {} --out {}".format(im_size_min,im_size_max,impath,outfile))
         tic2 = time.time()
         print("Run Cnn time is ",tic2-tic)
         CNN_result = []
-        with open(outfile) as f:
-            for line in f:
-                lineresult = line.split(' ')
-                x = float(lineresult[2]) / im_shape[1]
-                y = float(lineresult[3]) / im_shape[0]
-                w = (float(lineresult[4]) - float(lineresult[2])) / im_shape[1]
-                h = (float(lineresult[5]) - float(lineresult[3])) / im_shape[0]
-                conf = float(lineresult[1])
-                label = lineresult[0]
-                box_id = int(lineresult[6])
-                CNN_result.append([x,y,w,h,conf,label,box_id])
+        for lineresult in CnnRawResults:
+            x = float(lineresult[2]) / im_shape[1]
+            y = float(lineresult[3]) / im_shape[0]
+            w = (float(lineresult[4]) - float(lineresult[2])) / im_shape[1]
+            h = (float(lineresult[5]) - float(lineresult[3])) / im_shape[0]
+            conf = float(lineresult[1])
+            label = lineresult[0]
+            box_id = lineresult[6]
+            CNN_result.append([x,y,w,h,conf,label,box_id])
         return CNN_result
