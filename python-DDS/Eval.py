@@ -5,14 +5,7 @@ Created on Tue Sep  4 10:24:59 2018
 @author: admin
 """
 import argparse
-
-class Truth():
-    def __init__(self):
-        self.
-
-
-
-
+from f1_score import f1_eval
 
 def Load_Truth(truthPath):
     truth = {}
