@@ -74,9 +74,11 @@ def Run(mod, cnnargs, arg_params, aux_params):
 
     # print out
     out = open(cnnargs.out,'w')
+    box_id = 0
     for [cls, conf, x1, y1, x2, y2] in det:
         if cls > 0 and conf > cnnargs.vis_thresh:
-            print(class_names[int(cls)], conf, x1, y1, x2, y2, sep=' ', file=out)
+            print(class_names[int(cls)], conf, x1, y1, x2, y2, box_id, sep=' ', file=out)
+            box_id += 1
     out.close()
 
     # if vis
