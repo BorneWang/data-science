@@ -7,8 +7,8 @@ Created on Sat Sep  1 21:23:17 2018
 import glob
 import os
 import time
-from logic import DecisionMaker, Filtering
-from util import checkexistInServer, outputTofile, Segment, UnitResult, Result
+from logic_2 import DecisionMaker, Filtering
+from util_2 import checkexistInServer, outputTofile, Segment, UnitResult, Result
 
 
 class Client():
@@ -112,10 +112,11 @@ class Client():
                 print("Begin to ask CNN")
                 CNNResult = self.QueryCNN(RegionsToQuery)
                 results.AddResult(CNNResult)
-                #outputTofile(results)
                 FramdIDAfterLoacalFiltering = self.UpdateFrameList(FramdIDAfterLoacalFiltering,results)
                 results = self.logic.updateResults(results)
                
                 
             if len(FramdIDAfterLoacalFiltering.frameIdList) != 0:
                 self.logic.Tracking(FramdIDAfterLoacalFiltering,results)
+                
+            outputTofile(results)
