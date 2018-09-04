@@ -11,21 +11,23 @@ from symdata.vis import vis_detection
 from symnet.model import load_param, check_shape
 
 
-def load_CNN(args):
+def load_CNN(srcargs):
     ctx = mx.gpu(0)
-    arg_params, aux_params = load_param(args.params, ctx=ctx)
-    cnnargs = parse_args()
+    arg_params, aux_params = load_param(srcargs.params, ctx=ctx)
+    cnnargs = cnnparse_args()
+    cnnargs.src = srcargs.src
+    cnnargs.logic = srcargs.logic
+    print("success parser args")
     sym = get_network(cnnargs.network, cnnargs)
     data_names = ['data', 'im_info']
     label_names = None
     mod = Module(sym, data_names, label_names, context=ctx)
-    mod.init_params(arg_params=arg_params, aux_params=aux_params)
-    return mod,cnnargs
+    return mod,cnnargs,arg_params,aux_params
 
-def Run(mod, cnnargs):
+def Run(mod, cnnargs, arg_params, aux_params):
     class_names = get_class_names(cnnargs.dataset, cnnargs)
     # print config
-    print('called with cnnargs\n{}'.format(pprint.pformat(vars(cnnargs))))
+    #print('called with cnnargs\n{}'.format(pprint.pformat(vars(cnnargs))))
 
     # setup context
     #if args.gpu:
@@ -55,7 +57,7 @@ def Run(mod, cnnargs):
     # create and bind module
     #mod = Module(sym, data_names, label_names, context=ctx)
     mod.bind(data_shapes, label_shapes, for_training=False)
-    #mod.init_params(arg_params=arg_params, aux_params=aux_params)
+    mod.init_params(arg_params=arg_params, aux_params=aux_params)
 
     # forward
     mod.forward(data_batch)
@@ -72,11 +74,9 @@ def Run(mod, cnnargs):
 
     # print out
     out = open(cnnargs.out,'w')
-    box_id = 0
     for [cls, conf, x1, y1, x2, y2] in det:
         if cls > 0 and conf > cnnargs.vis_thresh:
-            print(class_names[int(cls)], conf, x1, y1, x2, y2, box_id,sep=' ', file=out)
-            box_id += 1
+            print(class_names[int(cls)], conf, x1, y1, x2, y2, sep=' ', file=out)
     out.close()
 
     # if vis
@@ -84,44 +84,46 @@ def Run(mod, cnnargs):
         vis_detection(im_orig, det, class_names, thresh=cnnargs.vis_thresh)
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Demonstrate a Faster R-CNN network',
+def cnnparse_args():
+    cnnparser = argparse.ArgumentParser(description='Demonstrate a Faster R-CNN network',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--network', type=str, default='resnet101', help='base network')
-    parser.add_argument('--params', type=str, default='rcnn/resnet_voc0712-0010.params', help='path to trained model')
-    parser.add_argument('--dataset', type=str, default='voc', help='training dataset')
-    parser.add_argument('--image', type=str, default='', help='path to test image')
-    parser.add_argument('--gpu', type=str, default='0', help='gpu device eg. 0')
-    parser.add_argument('--vis', action='store_true', help='display results')
-    parser.add_argument('--out', type=str, help='output')
-    parser.add_argument('--vis-thresh', type=float, default=0.7, help='threshold display boxes')
+    cnnparser.add_argument('--network', type=str, default='resnet101', help='base network')
+    cnnparser.add_argument('--params', type=str, default='rcnn/resnet_voc0712-0010.params', help='path to trained model')
+    cnnparser.add_argument('--dataset', type=str, default='voc', help='training dataset')
+    cnnparser.add_argument('--src', type=str, help='src video')
+    cnnparser.add_argument('--logic', type=str, help='logic')
+    cnnparser.add_argument('--image', type=str, default='', help='path to test image')
+    cnnparser.add_argument('--gpu', type=str, default='0', help='gpu device eg. 0')
+    cnnparser.add_argument('--vis', action='store_true', help='display results')
+    cnnparser.add_argument('--out', type=str, help='output')
+    cnnparser.add_argument('--vis-thresh', type=float, default=0.3, help='threshold display boxes')
     # faster rcnn params
-    parser.add_argument('--img-short-side', type=int, default=600)
-    parser.add_argument('--img-long-side', type=int, default=1000)
-    parser.add_argument('--img-pixel-means', type=str, default='(0.0, 0.0, 0.0)')
-    parser.add_argument('--img-pixel-stds', type=str, default='(1.0, 1.0, 1.0)')
-    parser.add_argument('--rpn-feat-stride', type=int, default=16)
-    parser.add_argument('--rpn-anchor-scales', type=str, default='(8, 16, 32)')
-    parser.add_argument('--rpn-anchor-ratios', type=str, default='(0.5, 1, 2)')
-    parser.add_argument('--rpn-pre-nms-topk', type=int, default=6000)
-    parser.add_argument('--rpn-post-nms-topk', type=int, default=300)
-    parser.add_argument('--rpn-nms-thresh', type=float, default=0.7)
-    parser.add_argument('--rpn-min-size', type=int, default=16)
-    parser.add_argument('--rcnn-num-classes', type=int, default=21)
-    parser.add_argument('--rcnn-feat-stride', type=int, default=16)
-    parser.add_argument('--rcnn-pooled-size', type=str, default='(14, 14)')
-    parser.add_argument('--rcnn-batch-size', type=int, default=1)
-    parser.add_argument('--rcnn-bbox-stds', type=str, default='(0.1, 0.1, 0.2, 0.2)')
-    parser.add_argument('--rcnn-nms-thresh', type=float, default=0.3)
-    parser.add_argument('--rcnn-conf-thresh', type=float, default=1e-3)
-    args = parser.parse_args()
-    args.img_pixel_means = ast.literal_eval(args.img_pixel_means)
-    args.img_pixel_stds = ast.literal_eval(args.img_pixel_stds)
-    args.rpn_anchor_scales = ast.literal_eval(args.rpn_anchor_scales)
-    args.rpn_anchor_ratios = ast.literal_eval(args.rpn_anchor_ratios)
-    args.rcnn_pooled_size = ast.literal_eval(args.rcnn_pooled_size)
-    args.rcnn_bbox_stds = ast.literal_eval(args.rcnn_bbox_stds)
-    return args
+    cnnparser.add_argument('--img-short-side', type=int, default=600)
+    cnnparser.add_argument('--img-long-side', type=int, default=1000)
+    cnnparser.add_argument('--img-pixel-means', type=str, default='(0.0, 0.0, 0.0)')
+    cnnparser.add_argument('--img-pixel-stds', type=str, default='(1.0, 1.0, 1.0)')
+    cnnparser.add_argument('--rpn-feat-stride', type=int, default=16)
+    cnnparser.add_argument('--rpn-anchor-scales', type=str, default='(8, 16, 32)')
+    cnnparser.add_argument('--rpn-anchor-ratios', type=str, default='(0.5, 1, 2)')
+    cnnparser.add_argument('--rpn-pre-nms-topk', type=int, default=6000)
+    cnnparser.add_argument('--rpn-post-nms-topk', type=int, default=300)
+    cnnparser.add_argument('--rpn-nms-thresh', type=float, default=0.7)
+    cnnparser.add_argument('--rpn-min-size', type=int, default=16)
+    cnnparser.add_argument('--rcnn-num-classes', type=int, default=21)
+    cnnparser.add_argument('--rcnn-feat-stride', type=int, default=16)
+    cnnparser.add_argument('--rcnn-pooled-size', type=str, default='(14, 14)')
+    cnnparser.add_argument('--rcnn-batch-size', type=int, default=1)
+    cnnparser.add_argument('--rcnn-bbox-stds', type=str, default='(0.1, 0.1, 0.2, 0.2)')
+    cnnparser.add_argument('--rcnn-nms-thresh', type=float, default=0.3)
+    cnnparser.add_argument('--rcnn-conf-thresh', type=float, default=1e-3)
+    cnnargs = cnnparser.parse_args()
+    cnnargs.img_pixel_means = ast.literal_eval(cnnargs.img_pixel_means)
+    cnnargs.img_pixel_stds = ast.literal_eval(cnnargs.img_pixel_stds)
+    cnnargs.rpn_anchor_scales = ast.literal_eval(cnnargs.rpn_anchor_scales)
+    cnnargs.rpn_anchor_ratios = ast.literal_eval(cnnargs.rpn_anchor_ratios)
+    cnnargs.rcnn_pooled_size = ast.literal_eval(cnnargs.rcnn_pooled_size)
+    cnnargs.rcnn_bbox_stds = ast.literal_eval(cnnargs.rcnn_bbox_stds)
+    return cnnargs
 
 
 def get_voc_names(args):
@@ -152,7 +154,6 @@ def get_vgg16_test(args):
                         rpn_min_size=args.rpn_min_size,
                         num_classes=args.rcnn_num_classes, rcnn_feature_stride=args.rcnn_feat_stride,
                         rcnn_pooled_size=args.rcnn_pooled_size, rcnn_batch_size=args.rcnn_batch_size)
-
 
 def get_resnet50_test(args):
     from symnet.symbol_resnet import get_resnet_test
@@ -208,4 +209,3 @@ def get_network(network, args):
     if network not in networks:
         raise ValueError("network {} not supported".format(network))
     return networks[network](args)
-
