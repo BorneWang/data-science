@@ -8,8 +8,8 @@ Created on Sat Sep  1 21:23:07 2018
 #import cv2
 import numpy as np
 import time
-from model_tf import Load_RCNN
-from model_tf import Run
+from model_tf_3 import Load_RCNN
+from model_tf_3 import Run
 
 class Server():
     def __init__(self,srcargs):
@@ -33,7 +33,7 @@ class Server():
         if len(CnnRawResults['detection_boxes']) == 0:
             CNN_result.append([0,0,0,0,0.1,'no obj',boxid])
         else:
-            for i in len(CnnRawResults['detection_boxes']):
+            for i in range(len(CnnRawResults['detection_boxes'])):
                 x1 = float(CnnRawResults['detection_boxes'][i][1])
                 y1 = float(CnnRawResults['detection_boxes'][i][0])
                 w = (float(CnnRawResults['detection_boxes'][i][3]) - float(CnnRawResults['detection_boxes'][i][1]))
