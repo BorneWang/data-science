@@ -8,9 +8,10 @@ import numpy as np
 import sys
 import tensorflow as tf
 from PIL import Image
+np.set_printoptions(threshold=np.inf)
 
 # This is needed since the notebook is stored in the object_detection folder.
-sys.path.append("..")
+sys.path.append("/home/bowen/models/research")
 from object_detection.utils import ops as utils_ops
 
 
@@ -28,9 +29,6 @@ def Load_RCNN(args):
 def load_image_into_numpy_array(image):
     (im_width, im_height) = image.size
     return np.array(image.getdata()).reshape((im_height, im_width, 3)).astype(np.uint8)
-
-
-TEST_IMAGE_PATHS = '123'
 
 def run_inference_for_single_image(image, graph):
     with graph.as_default():
@@ -75,14 +73,80 @@ def run_inference_for_single_image(image, graph):
                 output_dict['detection_masks'] = output_dict['detection_masks'][0]
     return output_dict
 
+def load_image_from_pix(path):
+    img = np.zeros([180,320,3])
+    dat = []
+    with open(path) as f:
+        for line in f:
+            pixel = line.split(' ')
+            pixel = [int(a) for a in pixel]
+            dat.append(pixel)
+    count = 0
+    for i in range(180):
+        for j in range(320):
+            if count < len(dat):
+                img[i][j][0] = dat[count][0]
+                img[i][j][1] = dat[count][1]
+                img[i][j][2] = dat[count][2]
+                count += 1
+            else:
+                break
+    return img.astype(np.uint8)
+
+def load_image_from_bytes(path):
+    np.set_printoptions(threshold=np.inf)
+    with open('server.log') as f:
+        for line in f:
+            pixel = line.split(' ')
+            print(len(pixel))
+            pixel = [int(a) for a in pixel]
+
+    img = np.zeros([180,320,3])
+    count = 0
+    for i in range(180):
+        for j in range(320):
+            if count < len(pixel):
+                img[i][j][0] = pixel[count]
+                count += 1
+                img[i][j][1] = pixel[count]
+                count += 1
+                img[i][j][2] = pixel[count]
+                count += 1
+            else:
+                break 
+    return img
+
 def Run(image_path,detection_graph,boxid):
-    image = Image.open(image_path)
+    #image = Image.open(image_path)
+    #print("the image pixel is :")
     # the array based representation of the image will be used later in order to prepare the
     # result image with boxes and labels on it.
-    image_np = load_image_into_numpy_array(image)
-    # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-    #image_np_expanded = np.expand_dims(image_np, axis=0)
+    #image_np = load_image_into_numpy_array(image)
+    image_np = load_image_from_bytes(image_path)
+    print(image_np.shape)
+    print(type(image_np))
+    print('##############################')
+    print(image_np)
+    print('##############################')
     # Actual detection.
     output_dict = run_inference_for_single_image(image_np, detection_graph)
-    return output_dict
-    
+    remove_index = []
+    for i in range(len(output_dict['detection_classes'])):
+        if output_dict['detection_classes'][i] != 3:
+           remove_index.append(i)
+    for i in range(len(output_dict['detection_scores'])):
+        if output_dict['detection_scores'][i] <= 0.3:
+           remove_index.append(i)
+    new_output = {}
+    new_output['detection_classes'] = []
+    new_output['detection_scores'] = []
+    new_output['detection_boxes'] = []
+    for i in range(len(output_dict['detection_boxes'])):
+        if i in remove_index:
+           continue
+        else:
+           new_output['detection_classes'].append(output_dict['detection_classes'][i])
+           new_output['detection_scores'].append(output_dict['detection_scores'][i])
+           new_output['detection_boxes'].append(output_dict['detection_boxes'][i])
+    print(new_output['detection_boxes'])
+    return new_output
