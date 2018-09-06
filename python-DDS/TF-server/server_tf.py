@@ -28,20 +28,19 @@ class Server():
         for i in range(len(CnnRawResults['detection_boxes'])):
             print(CnnRawResults['detection_boxes'][i])
             print(CnnRawResults['detection_scores'][i])
-        '''
+        
         CNN_result = []
         if len(CnnRawResults['detection_boxes']) == 0:
             CNN_result.append([0,0,0,0,0.1,'no obj',boxid])
         else:
             for i in len(CnnRawResults['detection_boxes']):
-                x1 = float(CnnRawResult['detection_boxes'][i][1])
-                y1 = float(CnnRawResult['detection_boxes'][i][0])
-                w = (float(CnnRawResult['detection_boxes'][i][3]) - float(CnnRawResult['detection_boxes'][i][1]))
-                h = (float(CnnRawResult['detection_boxes'][i][2]) - float(CnnRawResult['detection_boxes'][i][0]))
+                x1 = float(CnnRawResults['detection_boxes'][i][1])
+                y1 = float(CnnRawResults['detection_boxes'][i][0])
+                w = (float(CnnRawResults['detection_boxes'][i][3]) - float(CnnRawResults['detection_boxes'][i][1]))
+                h = (float(CnnRawResults['detection_boxes'][i][2]) - float(CnnRawResults['detection_boxes'][i][0]))
             
-                conf = float(CnnRawResult['detection_scores'][i])
-                label = CnnRawResult['detection_classes'][i]
-                box_id = CnnRawResult['bbox_id'][i]
-                CNN_result.append([x,y,w,h,conf,label,box_id])
+                conf = float(CnnRawResults['detection_scores'][i])
+                label = CnnRawResults['detection_classes'][i]
+                box_id = CnnRawResults['bbox_id'][i]
+                CNN_result.append([x1,y1,w,h,conf,label,box_id])
         return CNN_result
-        '''
