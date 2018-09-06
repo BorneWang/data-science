@@ -73,61 +73,12 @@ def run_inference_for_single_image(image, graph):
                 output_dict['detection_masks'] = output_dict['detection_masks'][0]
     return output_dict
 
-def load_image_from_pix(path):
-    img = np.zeros([180,320,3])
-    dat = []
-    with open(path) as f:
-        for line in f:
-            pixel = line.split(' ')
-            pixel = [int(a) for a in pixel]
-            dat.append(pixel)
-    count = 0
-    for i in range(180):
-        for j in range(320):
-            if count < len(dat):
-                img[i][j][0] = dat[count][0]
-                img[i][j][1] = dat[count][1]
-                img[i][j][2] = dat[count][2]
-                count += 1
-            else:
-                break
-    return img.astype(np.uint8)
-
-def load_image_from_bytes(path):
-    np.set_printoptions(threshold=np.inf)
-    with open('server.log') as f:
-        for line in f:
-            pixel = line.split(' ')
-            print(len(pixel))
-            pixel = [int(a) for a in pixel]
-
-    img = np.zeros([180,320,3])
-    count = 0
-    for i in range(180):
-        for j in range(320):
-            if count < len(pixel):
-                img[i][j][0] = pixel[count]
-                count += 1
-                img[i][j][1] = pixel[count]
-                count += 1
-                img[i][j][2] = pixel[count]
-                count += 1
-            else:
-                break 
-    return img
 
 def Run(image_path,detection_graph,boxid):
-    #image = Image.open(image_path)
-    #print("the image pixel is :")
+    image = Image.open(image_path)
     # the array based representation of the image will be used later in order to prepare the
     # result image with boxes and labels on it.
-    #image_np = load_image_into_numpy_array(image)
-    image_np = load_image_from_bytes(image_path)
-    print(image_np.shape)
-    print(type(image_np))
-    print('##############################')
-    print(image_np)
-    print('##############################')
+    image_np = load_image_into_numpy_array(image)
     # Actual detection.
     output_dict = run_inference_for_single_image(image_np, detection_graph)
     remove_index = []
@@ -141,6 +92,8 @@ def Run(image_path,detection_graph,boxid):
     new_output['detection_classes'] = []
     new_output['detection_scores'] = []
     new_output['detection_boxes'] = []
+    new_output['bbox_id'] = []
+    count = 0
     for i in range(len(output_dict['detection_boxes'])):
         if i in remove_index:
            continue
@@ -148,5 +101,11 @@ def Run(image_path,detection_graph,boxid):
            new_output['detection_classes'].append(output_dict['detection_classes'][i])
            new_output['detection_scores'].append(output_dict['detection_scores'][i])
            new_output['detection_boxes'].append(output_dict['detection_boxes'][i])
+           if boxid == -1:
+               new_output['bbox_id'].append(count)
+               count += 1
+           else:
+               new_output['bbox_id'].append(boxid)
+    
     print(new_output['detection_boxes'])
     return new_output
