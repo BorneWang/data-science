@@ -8,8 +8,8 @@ Created on Sat Sep  1 21:23:07 2018
 #import cv2
 import numpy as np
 import time
-from tf_model import Load_RCNN
-from tf_model import Run
+from model_tf import Load_RCNN
+from model_tf import Run
 
 class Server():
     def __init__(self,srcargs):
@@ -25,20 +25,23 @@ class Server():
         CnnRawResults = Run(impath,self.model,boxid)     
         tic2 = time.time()
         print("Run Cnn time is ",tic2-tic)
-        print("the length of the result",len(CnnRawResults['detection_boxes']))
+        for i in range(len(CnnRawResults['detection_boxes'])):
+            print(CnnRawResults['detection_boxes'][i])
+            print(CnnRawResults['detection_scores'][i])
         '''
         CNN_result = []
-        if len(CnnRawResults) == 0:
+        if len(CnnRawResults['detection_boxes']) == 0:
             CNN_result.append([0,0,0,0,0.1,'no obj',boxid])
         else:
-            for lineresult in CnnRawResults:
-                x = float(lineresult[2]) / im_shape[1]
-                y = float(lineresult[3]) / im_shape[0]
-                w = (float(lineresult[4]) - float(lineresult[2])) / im_shape[1]
-                h = (float(lineresult[5]) - float(lineresult[3])) / im_shape[0]
-                conf = float(lineresult[1])
-                label = lineresult[0]
-                box_id = lineresult[6]
+            for i in len(CnnRawResults['detection_boxes']):
+                x1 = float(CnnRawResult['detection_boxes'][i][1])
+                y1 = float(CnnRawResult['detection_boxes'][i][0])
+                w = (float(CnnRawResult['detection_boxes'][i][3]) - float(CnnRawResult['detection_boxes'][i][1]))
+                h = (float(CnnRawResult['detection_boxes'][i][2]) - float(CnnRawResult['detection_boxes'][i][0]))
+            
+                conf = float(CnnRawResult['detection_scores'][i])
+                label = CnnRawResult['detection_classes'][i]
+                box_id = CnnRawResult['bbox_id'][i]
                 CNN_result.append([x,y,w,h,conf,label,box_id])
         return CNN_result
         '''
