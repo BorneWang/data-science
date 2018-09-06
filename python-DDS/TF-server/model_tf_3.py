@@ -5,6 +5,7 @@ Created on Tue Sep  4 20:51:40 2018
 @author: admin
 """
 import numpy as np
+import time
 import sys
 import tensorflow as tf
 from PIL import Image
@@ -53,16 +54,19 @@ def run_inference_for_single_image(image, graph, sess):
             real_num_detection = tf.cast(tensor_dict['num_detections'][0], tf.int32)
             detection_boxes = tf.slice(detection_boxes, [0, 0], [real_num_detection, -1])
             detection_masks = tf.slice(detection_masks, [0, 0, 0], [real_num_detection, -1, -1])
-            detection_masks_reframed = utils_ops.reframe_box_masks_to_image_masks(detection_masks, detection_boxes, image.shape[0], image.shape[1])
+            detection_masks_reframed = utils_ops.reframe_box_masks_to_image_masks(detection_masks, detection_boxes, image.shape[0], image.shape[1]
+)
             detection_masks_reframed = tf.cast(tf.greater(detection_masks_reframed, 0.5), tf.uint8)
             # Follow the convention by adding back the batch dimension
             tensor_dict['detection_masks'] = tf.expand_dims(detection_masks_reframed, 0)
         image_tensor = tf.get_default_graph().get_tensor_by_name('image_tensor:0')
 
         # Run inference
+        tic0 = time.time()
         output_dict = sess.run(tensor_dict,
                          feed_dict={image_tensor: np.expand_dims(image, 0)})
-
+        tic1 = time.time()
+        print("@@@@@@@@@@@@Session Run Time@@@@@@@@@@@@@",tic1-tic0)
         # all outputs are float32 numpy arrays, so convert types as appropriate
         output_dict['num_detections'] = int(output_dict['num_detections'][0])
         output_dict['detection_classes'] = output_dict['detection_classes'][0].astype(np.uint8)
