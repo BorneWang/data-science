@@ -6,6 +6,7 @@ Created on Sat Sep  1 21:22:42 2018
 
 import argparse
 from server_tf import Server
+from client_tf import Client
 
 def main():
     parser = argparse.ArgumentParser(description='client and server',
@@ -16,7 +17,9 @@ def main():
     srcargs = parser.parse_args()
    
     Srv = Server(srcargs)
-    Srv.RUNCNN(srcargs.src,0)
+    Clt = Client(srcargs,Srv)
+    
+    Clt.Run()
     
     
 if __name__ == '__main__':
