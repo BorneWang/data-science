@@ -6,6 +6,9 @@ Created on Tue Sep  4 00:40:49 2018
 """
 
 import os
+RES_LOW = 0.4
+RES_MID = 0.6
+RES_HIGH = 0.8
 
 class Region():
     def __init__(self,frameID,x,y,w,h,res,box_id=-1,num=0):
@@ -58,10 +61,10 @@ class Result():
 
 
 def increaseRes(oldres):
-    if oldres == 0.25:
-        newres = 0.5
-    elif oldres == 0.5:
-        newres = 0.75
+    if oldres == RES_LOW:
+        newres = RES_MID
+    elif oldres == RES_MID:
+        newres = RES_HIGH
     else:
         newres = 1
     return newres
@@ -71,13 +74,24 @@ def checkexistInServer(frameID):
     count = 1
     new_ID = frameID
     while True:
-        path = 'Sendtoserver/' + new_ID + '.png'
+        path = 'Sendtoserver/' + new_ID + '.jpeg'
         if os.path.exists(path):
             new_ID = str(count) + '+' +frameID
             count += 1
         else:
             break
     return new_ID
+
+
+def ConfigOS(args):
+    os.makedirs(args.logic,exist_ok=True)
+    os.chdir(args.logic)
+    os.makedirs('Sendtoserver',exist_ok=True)
+    os.makedirs('Results',exist_ok=True)
+    os.makedirs('tempReserve',exist_ok=True)
+    os.makedirs('debug_log',exist_ok=True)
+    if args.logic == 'DDS':
+        os.makedirs('CropReserve',exist_ok=True)
 
 
 def outputTofile(inputresult):
@@ -90,10 +104,12 @@ def outputTofile(inputresult):
             print("region.w :",region.w,file=outfile)
             print("region.h :",region.h,file=outfile)
             print("region.res :",region.res,file=outfile)
+        print("##########################",file=outfile)
         outfile.close()
     else:
         outfile = open('Results/serverSideResults','a')
         for region in inputresult.unitResults:
             print(region.frameID,region.x,region.y,region.w,region.h,
                   region.label,region.confidence,region.res,sep=',',file=outfile)
+        print("#############################")
         outfile.close()

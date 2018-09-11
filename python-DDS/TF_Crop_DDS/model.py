@@ -9,6 +9,8 @@ import time
 import sys
 import tensorflow as tf
 np.set_printoptions(threshold=np.inf)
+Remove_Thres = 0.2
+BoxThres = 0.0065
 
 # This is needed since the notebook is stored in the object_detection folder.
 sys.path.append("/home/bowen/models/research")
@@ -79,7 +81,12 @@ def Run(image_np,detection_graph,session):
         if output_dict['detection_classes'][i] != 3:
            remove_index.append(i)
     for i in range(len(output_dict['detection_scores'])):
-        if output_dict['detection_scores'][i] <= 0.3:
+        if output_dict['detection_scores'][i] <= Remove_Thres:
+           remove_index.append(i)
+    for i in range(len(output_dict['detection_boxes'])):
+        w = float(output_dict['detection_boxes'][i][3]) - float(output_dict['detection_boxes'][i][1])
+        h = float(output_dict['detection_boxes'][i][2]) - float(output_dict['detection_boxes'][i][0])
+        if max(0,w) * max(0,h) <= BoxThres:
            remove_index.append(i)
     new_output = {}
     new_output['detection_classes'] = []

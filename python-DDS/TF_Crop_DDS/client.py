@@ -21,36 +21,17 @@ class Client():
         self.tracker_last = 0
         #self.outPath = args.output
        
-        
-    def getImage(self,region):
-        frameID = str(region.frameID)
-        frameID = frameID.zfill(10)
-        framePath = self.src + '/' + frameID + '.png'
-        new_frameID = checkexistInServer(frameID)
-        tempPath = 'tempReserve/' + new_frameID + '.jpeg'
-        impath = 'Sendtoserver/' + new_frameID + '.jpeg'
-        w = region.w
-        h = region.h
-        x = region.x
-        y = region.y
-        #print("ffmpeg framepath is",framePath)
-        os.system("ffmpeg -loglevel error -i {} -filter:v \"crop=iw*{}:ih*{}:iw*{}:ih*{}\" -y {}".format(framePath,w,h,x,y,tempPath))
-        os.system("ffmpeg -loglevel error -i {0} -vf scale=iw*{1}:ih*{1} {2}".format(tempPath,region.res,impath))
-        os.system("rm {}".format(tempPath))
-        #print("ffmpeg impath is",impath)
-        return impath
- 
               
     def QueryCNN(self, Regions):
         Results = Result()
         for region in Regions:
             tic = time.time()
-            impath = self.getImage(region)
+            impath = self.logic.getImage(region)
             tic2 = time.time()
             print("**********************the time of get image is ************************************",tic2-tic)
             print("the box id is :",region.boxID)
             infresult,num_low_conf = self.server.RUNCNN(impath,region)
-            if infresult == None:
+            if num_low_conf == -1:
                 continue
             for line in infresult:
                 x = line[0] 
@@ -65,18 +46,18 @@ class Client():
         return Results
     
     def getNextSegment(self,now,maxsize=8):
-        Allframes = sorted(glob.glob('{}/*.png'.format(self.src)))
+        Allframes = sorted(glob.glob('{}/*.jpeg'.format(self.src)))
         print("src is ",self.src)
         seg = Segment()
         if now == len(Allframes):
             return seg
-        print("======================================= from last update: ",time.time()-self.lastupdatetime)
+        print("======================================= one segment time: ",time.time()-self.lastupdatetime)
         self.lastupdatetime = time.time()
         count = 0
         for frame in Allframes[now:]:
             now +=1
             #print("frame is ",frame[len(frame)-14:len(frame)-4])
-            frameID = int(frame[len(frame)-14:len(frame)-4])
+            frameID = int(frame[len(frame)-15:len(frame)-5])
             seg.frameIdList.append(frameID)
             count += 1
             if count == maxsize:
@@ -105,17 +86,22 @@ class Client():
             results = Result()
             RegionsToQuery = []
             while True:
-                print("Begin to run logic")
+                ticc0 = time.time()
                 RegionsToQuery = self.logic.GetNextRegionToQuery(FramdIDAfterLoacalFiltering,
                                                                 results)
+                ticc1 = time.time()
+                print("GetNextRegionToQuery time is :",ticc1-ticc0)
                 #outputTofile(RegionsToQuery)
                 if len(RegionsToQuery) == 0:
                     break
-                print("Begin to ask CNN")
                 CNNResult = self.QueryCNN(RegionsToQuery)
+                ticc2 = time.time()
+                print("QueryCNN time is :",ticc2-ticc1)
                 results.AddResult(CNNResult)
                 FramdIDAfterLoacalFiltering = self.UpdateFrameList(FramdIDAfterLoacalFiltering,results)
                 results = self.logic.updateResults(results)
+                ticc3 = time.time()
+                print("update Results time is :",ticc3-ticc2)
                
                 
             if len(FramdIDAfterLoacalFiltering.frameIdList) != 0:

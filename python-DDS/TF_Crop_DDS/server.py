@@ -1,12 +1,13 @@
-9# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Created on Sat Sep  1 21:23:07 2018
 @author: admin
 """
 
-from model_tf import Load_RCNN
-from model_tf import Run
+from model import Load_RCNN
+from model import Run
 from merge_image import Imageprocesor
+import numpy as np
 
 class Server():
     def __init__(self,srcargs):
@@ -17,20 +18,21 @@ class Server():
     def RUNCNN(self,impath,region):
         print("impath is",impath)
         image_np = self.logic.merge_image(impath,region)
-        if image_np == None:
+        if type(image_np) != np.ndarray:
             return None,-1
         
-        print("in server.py, boxid = ",region.boxid)
+        print("in server.py, boxid = ",region.boxID)
         CnnRawResults = Run(image_np,self.graph, self.session)     
         
         for i in range(len(CnnRawResults['detection_boxes'])):
             print(CnnRawResults['detection_boxes'][i])
             print(CnnRawResults['detection_scores'][i])
         CNN_result = []
+        num_low_conf = 0
         if len(CnnRawResults['detection_boxes']) == 0:
-            CNN_result.append([0,0,0,0,0.1,'no obj',region.boxid])
+            CNN_result.append([0,0,0,0,0.1,'no obj',region.boxID])
+            num_low_conf = 1
         else:
-            num_low_conf = 0
             for i in range(len(CnnRawResults['detection_boxes'])):
                 x1 = float(CnnRawResults['detection_boxes'][i][1])
                 y1 = float(CnnRawResults['detection_boxes'][i][0])

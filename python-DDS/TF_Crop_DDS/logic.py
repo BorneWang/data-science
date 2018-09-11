@@ -5,8 +5,12 @@ Created on Tue Sep  4 00:38:33 2018
 @author: admin
 """
 from tracker import KCF_tracker
+import os
 import time
-from util import increaseRes, Region, Result
+from util import increaseRes, Region, Result,checkexistInServer
+RES_LOW = 0.4
+RES_MID = 0.6
+RES_HIGH = 0.8
 
 class Filtering():
     def __init__(self,args):
@@ -18,6 +22,17 @@ class Filtering():
         else:
             return segment
 
+def MpegVideo(args):
+    tempPath = 'tempReserve/temp_video.mp4'
+    if args.qp == -1:
+        os.system("ffmpeg -loglevel error -i {0} -crf {1} -vcodec libx264 -vf scale=iw*{2}:ih*{2} tempReserve/temp_video.mp4".format(args.video,args.crf,args.res))
+    else:
+        os.system("ffmpeg -loglevel error -i {0} -qp {1} -vcodec libx264 -vf scale=iw*{2}:ih*{2} tempReserve/temp_video.mp4".format(args.video,args.qp,args.res))
+    os.system("ffmpeg -y -i {} -vcodec mjpeg -pix_fmt yuvj420p -q:v 18 -vframes 100 -vsync 0 -start_number 0 Sendtoserver/%010d.jpeg".format(tempPath))
+    src = 'Sendtoserver'
+    return src
+
+
 class DecisionMaker():
     def __init__(self,args):
         self.logic = args.logic
@@ -26,17 +41,50 @@ class DecisionMaker():
         self.Maxpick = 4
         self.pick_count = 0
         self.maxThres = 0.8
-        self.minThres = 0.3
+        self.minThres = 0.4
         self.DiffDic = {}
         self.tracker_last = 0
+        self.resdict = {}
         # GroundTruth fields
         self.var3 = 0
-        # NoScope/Glimpse/Vigil fields
+        # MPEG
+        if args.logic == 'MPEG':
+           self.mpegsrc = MpegVideo(args)
+        else:
+           self.mpegsrc = 0
+
+    def getImage(self,region):
+        frameID = str(region.frameID)
+        frameID = frameID.zfill(10)
+        framePath = self.src + '/' + frameID + '.jpeg'
+        new_frameID = checkexistInServer(frameID)
+        print("new_frameID is :",new_frameID)
+        if self.logic == 'GroundTruth':
+            impath = framePath
+            return impath
+        elif self.logic == 'MPEG':
+            impath = self.mpegsrc + '/' + frameID + '.jpeg'
+            return impath
+        else:
+            tempPath = 'tempReserve/' + new_frameID + '.jpeg'
+            impath = 'Sendtoserver/' + new_frameID + '.jpeg'
+            w = region.w
+            h = region.h
+            x = region.x
+            y = region.y
+            os.system("ffmpeg -loglevel error -i {0} -q:v 1 -vf scale=iw*{1}:ih*{1} {2}".format(framePath,region.res,tempPath))
+            os.system("ffmpeg -loglevel error -i {} -q:v 1 -filter:v \"crop=iw*{}:ih*{}:iw*{}:ih*{}\" -y {}".format(tempPath,w,h,x,y,impath))
+            os.system("rm {}".format(tempPath))
+            return impath
+
+
+
+
     
     def GetNextRegionToQuery(self, segment, Results):
         regions = []
         frames = segment.GetFrameIdList()
-        if self.logic == 'GroundTruth':
+        if self.logic == 'GroundTruth' or self.logic == 'MPEG':
             for frameId in frames:
                 regions.append(Region(frameId,0,0,1,1,1))
             return regions
@@ -44,16 +92,19 @@ class DecisionMaker():
             #print("Begin DDS logic")
             if len(Results.unitResults) == 0:
                 self.DiffDic = {}
-                regions.append(Region(frames[0],0,0,1,1,0.25))
-                regions.append(Region(frames[len(frames)-1],0,0,1,1,0.25))
+                regions.append(Region(frames[0],0,0,1,1,RES_LOW))
+                regions.append(Region(frames[len(frames)-1],0,0,1,1,RES_LOW))
                 self.DiffDic[(frames[0],frames[len(frames)-1])] = -1
+                self.resdict[frames[0]] = RES_LOW
+                self.resdict[frames[len(frames)-1]] = RES_LOW
                 self.pick_count +=2
                 return regions
             else:
                 #Croping
                 for ret in Results.unitResults:
                     if ret.confidence > self.minThres and ret.confidence < self.maxThres:
-                       if ret.res != 1:
+                        ret.res = self.resdict[ret.frameID]
+                        if ret.res != 1:
                            print("Before renew resolution")
                            print("frameID:",ret.frameID," res:",ret.res," boxID",ret.boxID,"confidence:",ret.confidence)
                            newResolution = increaseRes(ret.res)
@@ -66,6 +117,9 @@ class DecisionMaker():
                                                  newResolution,
                                                  ret.boxID,
                                                  ret.num))
+                for feID in self.resdict:
+                    self.resdict[feID] = increaseRes(self.resdict[feID])
+                    #print("!!!!!!!!!!!!!!!!!!!!!!",self.resdict[feID],"!!!!!!!!!!!!!")
                 if self.pick_count == self.Maxpick:
                     self.pick_count = 0
                     return regions
@@ -92,7 +146,8 @@ class DecisionMaker():
                     del self.DiffDic[maxkey]
                     self.DiffDic[(maxkey[0],midframe)] = -1
                     self.DiffDic[(maxkey[1],midframe)] = -1
-                    regions.append(Region(midframe,0,0,1,1,0.25))
+                    regions.append(Region(midframe,0,0,1,1,RES_LOW))
+                    self.resdict[midframe] = RES_LOW
                     self.pick_count += 1
             return regions
         #if self.logic == Noscope:
@@ -125,21 +180,19 @@ i].confidence,"bbox :",results.unitResults[i].boxID)
                 else:
                     new_results.unitResults.append(results.unitResults[i])
             return new_results
-        if self.logic == 'GroundTruth':
+        else: 
             return results
     
     
     
     def Tracking_label(self,frameID,now_boxes,results):
-        frameID = str(frameID)
-        frameID = frameID.zfill(10)
         #OutPath = 'Clienttracking/' + frameID + '.result'
         Out = open('Results/trackingResults','a')
         i = 0
         for result in results.unitResults:
             if result.frameID == self.tracker_last and result.confidence >self.maxThres:
                 if i < len(now_boxes):
-                    print(result.frameID,now_boxes[i][0],now_boxes[i][1],
+                    print(frameID,now_boxes[i][0],now_boxes[i][1],
                           now_boxes[i][2],now_boxes[i][3],result.label,
                           sep=',',file=Out)
                     i += 1
@@ -161,5 +214,6 @@ i].confidence,"bbox :",results.unitResults[i].boxID)
                 now_boxes = tracker.Update(frameID)
                 self.Tracking_label(frameID,now_boxes,results)
                 
-        if self.logic == 'GroundTruth':
+        else:
             return None
+

@@ -9,7 +9,7 @@ class KCF_tracker():
         self.tracker = cv2.MultiTracker_create()
         last_img = str(last_img)
         last_img = last_img.zfill(10)
-        framePath = self.src + '/' + last_img + '.png'
+        framePath = self.src + '/' + last_img + '.jpeg'
         print("refer img is", last_img)
         image = cv2.imread(framePath)
         im_w = image.shape[1] 
@@ -25,19 +25,20 @@ class KCF_tracker():
     def Update(self,now_img):
         now_img = str(now_img)
         now_img = now_img.zfill(10)
-        framePath = self.src + '/' + now_img + '.png'
+        framePath = self.src + '/' + now_img + '.jpeg'
         print("img need track, id is", now_img)
         image = cv2.imread(framePath)
-        im_w = image.shape[1]
-        im_h = image.shape[0]
+        im_h = float(image.shape[0])
+        im_w = float(image.shape[1])
         ok, boxes = self.tracker.update(image)
         #print("boxes is", boxes)
         conv_boxes = []
         for i,bbox in enumerate(boxes):
-            x = bbox[0]*im_w
-            y = bbox[1]*im_h
-            w = bbox[2]*im_w
-            h = bbox[3]*im_h
+            x = bbox[0] / im_w
+            y = bbox[1] / im_h
+            w = bbox[2] / im_w
+            h = bbox[3] / im_h
             box = [x,y,w,h]
+            print(x,y,w,h)
             conv_boxes.append(box)
-        return boxes
+        return conv_boxes
